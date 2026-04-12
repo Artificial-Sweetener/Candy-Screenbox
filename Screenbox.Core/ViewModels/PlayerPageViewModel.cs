@@ -665,10 +665,9 @@ public sealed partial class PlayerPageViewModel : ObservableRecipient,
             if (isPopupOpen) return false;
         }
 
-        ControlsHidden = true;
-
         // Workaround for PointerMoved is raised when show/hide cursor
         OverrideControlsDelayHide();
+        ControlsHidden = true;
 
         return true;
     }
