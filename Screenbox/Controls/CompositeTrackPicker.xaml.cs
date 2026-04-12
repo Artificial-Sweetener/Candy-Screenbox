@@ -30,11 +30,6 @@ public sealed partial class CompositeTrackPicker : UserControl
     /// </summary>
     public ObservableCollection<string> AudioDisplayList { get; } = new();
 
-    /// <summary>
-    /// View-level video track list with "Track N" fallback labels for unlabeled tracks.
-    /// </summary>
-    public ObservableCollection<string> VideoDisplayList { get; } = new();
-
     internal CompositeTrackPickerViewModel ViewModel => (CompositeTrackPickerViewModel)DataContext;
 
     public CompositeTrackPicker()
@@ -44,7 +39,6 @@ public sealed partial class CompositeTrackPicker : UserControl
 
         ViewModel.SubtitleTracks.CollectionChanged += (_, _) => RebuildSubtitleDisplayList();
         ViewModel.AudioTracks.CollectionChanged += (_, _) => RebuildAudioDisplayList();
-        ViewModel.VideoTracks.CollectionChanged += (_, _) => RebuildVideoDisplayList();
     }
 
     /// <summary>Formats a track's display name, falling back to "Track N" when the label is empty.</summary>
@@ -75,11 +69,4 @@ public sealed partial class CompositeTrackPicker : UserControl
         AudioDisplayList.SyncItems(newList);
     }
 
-    private void RebuildVideoDisplayList()
-    {
-        var newList = ViewModel.VideoTracks.Select((label, index) => GetTrackDisplayName(label, index + 1)).ToList();
-
-        // Avoid clearing and repopulating the existing ObservableCollection to prevent unexpected SelectedIndex change.
-        VideoDisplayList.SyncItems(newList);
-    }
 }

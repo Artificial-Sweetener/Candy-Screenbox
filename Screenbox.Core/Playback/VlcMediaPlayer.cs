@@ -421,6 +421,7 @@ namespace Screenbox.Core.Playback
         private void VlcPlayer_Playing(object sender, EventArgs e)
         {
             PlaybackState = MediaPlaybackState.Playing;
+            ApplySelectedPlaybackTracks();
             if (!_updateMediaProperties) return;
             _updateMediaProperties = false;
 
@@ -486,21 +487,43 @@ namespace Screenbox.Core.Playback
         private void AudioTracksOnSelectedIndexChanged(ISingleSelectMediaTrackList sender, object? args)
         {
             PlaybackAudioTrackList trackList = (PlaybackAudioTrackList)sender;
-            VlcPlayer.SetAudioTrack(sender.SelectedIndex < 0 ? -1 : trackList[sender.SelectedIndex].VlcTrackId);
+            if (sender.SelectedIndex < 0)
+            {
+                VlcPlayer.SetAudioTrack(-1);
+            }
+            else if (sender.SelectedIndex < trackList.Count)
+            {
+                VlcPlayer.SetAudioTrack(trackList[sender.SelectedIndex].VlcTrackId);
+            }
         }
 
         private void VideoTracksOnSelectedIndexChanged(ISingleSelectMediaTrackList sender, object? args)
         {
             PlaybackVideoTrackList trackList = (PlaybackVideoTrackList)sender;
-            VlcPlayer.SetVideoTrack(sender.SelectedIndex < 0 ? -1 : trackList[sender.SelectedIndex].VlcTrackId);
+            if (sender.SelectedIndex < 0)
+            {
+                VlcPlayer.SetVideoTrack(-1);
+            }
+            else if (sender.SelectedIndex < trackList.Count)
+            {
+                VlcPlayer.SetVideoTrack(trackList[sender.SelectedIndex].VlcTrackId);
+            }
         }
 
         private void SubtitleTracksOnSelectedIndexChanged(ISingleSelectMediaTrackList sender, object? args)
         {
             PlaybackSubtitleTrackList trackList = (PlaybackSubtitleTrackList)sender;
             if (sender.SelectedIndex < 0) VlcPlayer.SetSpu(-1);
-            else if (trackList[sender.SelectedIndex].VlcSpu >= 0)   // VlcSpu < 0 on lazy load
+            else if (sender.SelectedIndex < trackList.Count && trackList[sender.SelectedIndex].VlcSpu >= 0)   // VlcSpu < 0 on lazy load
                 VlcPlayer.SetSpu(trackList[sender.SelectedIndex].VlcSpu);
+        }
+
+        private void ApplySelectedPlaybackTracks()
+        {
+            if (PlaybackItem == null) return;
+
+            AudioTracksOnSelectedIndexChanged(PlaybackItem.AudioTracks, null);
+            SubtitleTracksOnSelectedIndexChanged(PlaybackItem.SubtitleTracks, null);
         }
 
         public void AddSubtitle(IStorageFile file, bool select = true)

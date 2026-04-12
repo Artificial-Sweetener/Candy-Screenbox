@@ -32,13 +32,9 @@ public sealed partial class CompositeTrackPickerViewModel : ObservableRecipient,
 
     public ObservableCollection<string> AudioTracks { get; }
 
-    public ObservableCollection<string> VideoTracks { get; }
-
     private PlaybackSubtitleTrackList? ItemSubtitleTrackList => MediaPlayer?.PlaybackItem?.SubtitleTracks;
 
     private PlaybackAudioTrackList? ItemAudioTrackList => MediaPlayer?.PlaybackItem?.AudioTracks;
-
-    private PlaybackVideoTrackList? ItemVideoTrackList => MediaPlayer?.PlaybackItem?.VideoTracks;
 
     private IMediaPlayer? MediaPlayer => _playerContext.MediaPlayer;
 
@@ -56,11 +52,6 @@ public sealed partial class CompositeTrackPickerViewModel : ObservableRecipient,
     /// The currently selected audio track index. <c>-1</c> means no track is selected.
     /// </summary>
     [ObservableProperty] private int _audioTrackIndex;
-
-    /// <summary>
-    /// The currently selected video track index. <c>-1</c> means no track is selected.
-    /// </summary>
-    [ObservableProperty] private int _videoTrackIndex;
 
     private readonly IFilesService _filesService;
     private readonly IPlaybackTrackProfileStore _trackProfileStore;
@@ -82,7 +73,6 @@ public sealed partial class CompositeTrackPickerViewModel : ObservableRecipient,
         _playerContext = playerContext;
         SubtitleTracks = new ObservableCollection<string>();
         AudioTracks = new ObservableCollection<string>();
-        VideoTracks = new ObservableCollection<string>();
 
         IsActive = true;
     }
@@ -238,12 +228,6 @@ public sealed partial class CompositeTrackPickerViewModel : ObservableRecipient,
             NotifyProfileCommandCanExecuteChanged();
     }
 
-    partial void OnVideoTrackIndexChanged(int value)
-    {
-        if (ItemVideoTrackList != null && value >= 0 && value < ItemVideoTrackList.Count)
-            ItemVideoTrackList.SelectedIndex = value;
-    }
-
     /// <summary>
     /// Adds a subtitle file to the current media. Sends a <see cref="Core.Messages.FailedToLoadSubtitleNotificationMessage"/> on failure.
     /// </summary>
@@ -285,14 +269,6 @@ public sealed partial class CompositeTrackPickerViewModel : ObservableRecipient,
         ItemAudioTrackList.Refresh();
         var trackLabels = ItemAudioTrackList.Select(track => track.Label).ToList();
         AudioTracks.SyncItems(trackLabels);
-    }
-
-    private void UpdateVideoTrackList()
-    {
-        if (ItemVideoTrackList == null) return;
-        ItemVideoTrackList.Refresh();
-        var trackLabels = ItemVideoTrackList.Select(track => track.Label).ToList();
-        VideoTracks.SyncItems(trackLabels);
     }
 
     private void UpdateSubtitleTrackList()
@@ -463,10 +439,8 @@ public sealed partial class CompositeTrackPickerViewModel : ObservableRecipient,
     {
         UpdateSubtitleTrackList();
         UpdateAudioTrackList();
-        UpdateVideoTrackList();
         SubtitleTrackIndex = (ItemSubtitleTrackList?.SelectedIndex + 1) ?? 0;
         AudioTrackIndex = ItemAudioTrackList?.SelectedIndex ?? -1;
-        VideoTrackIndex = ItemVideoTrackList?.SelectedIndex ?? -1;
     }
 
     private void NotifyProfileCommandCanExecuteChanged()
