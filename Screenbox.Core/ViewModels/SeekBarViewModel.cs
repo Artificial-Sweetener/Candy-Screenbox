@@ -382,7 +382,7 @@ public sealed partial class SeekBarViewModel :
         if (chapterList == null) return;
         if (MediaPlayer != null)
         {
-            chapterList.Load(MediaPlayer);
+            chapterList.EnsureLoaded(MediaPlayer);
         }
 
         foreach (ChapterCue chapterCue in chapterList)

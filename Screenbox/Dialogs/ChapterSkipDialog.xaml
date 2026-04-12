@@ -1,0 +1,101 @@
+<ContentDialog
+    x:Class="Screenbox.Dialogs.ChapterSkipDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dialogs="using:Screenbox.Dialogs"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:strings="using:Screenbox.Strings"
+    x:Name="ChapterSkipDialogRoot"
+    Title="{strings:Resources Key=ChapterSkipRules}"
+    CloseButtonText="{strings:Resources Key=Close}"
+    DefaultButton="Primary"
+    Loaded="ChapterSkipDialog_OnLoaded"
+    PrimaryButtonClick="ChapterSkipDialog_OnPrimaryButtonClick"
+    PrimaryButtonText="{strings:Resources Key=Save}"
+    Style="{StaticResource DefaultContentDialogStyle}"
+    mc:Ignorable="d">
+
+    <StackPanel Orientation="Vertical" Spacing="12">
+        <TextBlock Text="{strings:Resources Key=ChapterSkipRulesDescription}" TextWrapping="Wrap" />
+
+        <ComboBox
+            x:Name="ScopeComboBox"
+            MinWidth="220"
+            DisplayMemberPath="Label"
+            Header="{strings:Resources Key=ChapterSkipScope}"
+            ItemsSource="{x:Bind ScopeOptions}"
+            SelectionChanged="ScopeComboBox_OnSelectionChanged" />
+
+        <TextBlock
+            x:Name="TargetLocationText"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            IsTextSelectionEnabled="True"
+            Style="{StaticResource CaptionTextBlockStyle}"
+            TextWrapping="Wrap" />
+
+        <ScrollViewer
+            MaxHeight="320"
+            HorizontalScrollBarVisibility="Disabled"
+            HorizontalScrollMode="Disabled"
+            VerticalScrollBarVisibility="Auto"
+            VerticalScrollMode="Auto">
+            <ItemsControl
+                x:Name="RulesItemsControl"
+                ItemsSource="{x:Bind Rules}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="dialogs:ChapterSkipRuleEditorItem">
+                        <Grid Margin="0,4" ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="170" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <ToggleSwitch
+                                Grid.Column="0"
+                                MinWidth="0"
+                                IsOn="{x:Bind IsEnabled, Mode=TwoWay}" />
+
+                            <ComboBox
+                                Grid.Column="1"
+                                MinWidth="160"
+                                SelectedIndex="{x:Bind MatchModeIndex, Mode=TwoWay}">
+                                <ComboBoxItem Content="{strings:Resources Key=ChapterMatchTitleContains}" />
+                                <ComboBoxItem Content="{strings:Resources Key=ChapterMatchTitleEquals}" />
+                                <ComboBoxItem Content="{strings:Resources Key=ChapterMatchTitleRegex}" />
+                                <ComboBoxItem Content="{strings:Resources Key=ChapterMatchIndex}" />
+                            </ComboBox>
+
+                            <TextBox
+                                Grid.Column="2"
+                                MinWidth="180"
+                                PlaceholderText="{strings:Resources Key=ChapterSkipRuleValuePlaceholder}"
+                                Text="{x:Bind Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <Button
+                                Grid.Column="3"
+                                Width="32"
+                                Height="32"
+                                Padding="0"
+                                Click="RemoveRuleButton_OnClick"
+                                Style="{StaticResource SubtleButtonStyle}"
+                                ToolTipService.ToolTip="{strings:Resources Key=Remove}">
+                                <FontIcon Glyph="&#xE894;" />
+                            </Button>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <Button Click="AddRuleButton_OnClick" Content="{strings:Resources Key=ChapterSkipAddRule}" />
+
+        <TextBlock
+            x:Name="ErrorText"
+            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+            TextWrapping="Wrap"
+            Visibility="Collapsed" />
+    </StackPanel>
+</ContentDialog>

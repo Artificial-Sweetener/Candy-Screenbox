@@ -61,6 +61,7 @@ public static class ServiceHelpers
         // Controllers
         services.AddSingleton<LibraryController>();
         services.AddSingleton<LastPositionTracker>();
+        services.AddSingleton<ChapterSkipController>();
 
         // Services
         services.AddSingleton<IPlayerService, PlayerService>();
@@ -72,6 +73,8 @@ public static class ServiceHelpers
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<ISystemMediaTransportControlsService, SystemMediaTransportControlsService>();
         services.AddSingleton<ILivelyWallpaperService, LivelyWallpaperService>();
+        services.AddSingleton<ChapterSkipResolver>();
+        services.AddSingleton<IChapterSkipStore, ChapterSkipStore>();
         services.AddSingleton<IPlaybackControlService, PlaybackControlService>();
         services.AddSingleton<IPlaylistService, PlaylistService>();
     }

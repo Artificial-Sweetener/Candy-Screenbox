@@ -146,6 +146,15 @@
                         <KeyboardAccelerator Key="I" Modifiers="Control" />
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
+                <MenuFlyoutItem
+                    CommandParameter="{x:Bind ViewModel.Playlist.CurrentItem, Mode=OneWay}"
+                    Icon="{ui:FontIcon Glyph=&#xE8C6;}"
+                    IsEnabled="{x:Bind ViewModel.HasActiveItem, Mode=OneWay}"
+                    Text="{strings:Resources Key=ConfigureChapterSkip}">
+                    <MenuFlyoutItem.Command>
+                        <commands:ConfigureChapterSkipCommand />
+                    </MenuFlyoutItem.Command>
+                </MenuFlyoutItem>
                 <MenuFlyoutSubItem
                     x:Name="PlaybackSpeedSubMenu"
                     AccessKey="{strings:KeyboardResources Key=MenuItemSpeedKey}"

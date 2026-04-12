@@ -55,13 +55,14 @@ public sealed partial class MainPageViewModel : ObservableRecipient,
 
     public MainPageViewModel(ISearchService searchService, INavigationService navigationService,
         LibraryContext libraryContext, ILibraryService libraryService, LibraryController libraryController,
-        PlaylistsContext playlistsContext, IPlaylistService playlistService)
+        ChapterSkipController chapterSkipController, PlaylistsContext playlistsContext, IPlaylistService playlistService)
     {
         _searchService = searchService;
         _navigationService = navigationService;
         _libraryContext = libraryContext;
         _libraryService = libraryService;
         _libraryController = libraryController;
+        _ = chapterSkipController; // Ensure the playback controller singleton is constructed.
         _playlistsContext = playlistsContext;
         _playlistService = playlistService;
         _searchQuery = string.Empty;

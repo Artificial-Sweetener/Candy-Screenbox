@@ -1065,4 +1065,55 @@
     <value>Added {0} items to playlist "{1}"</value>
     <comment>#Format[Plural count, String name]</comment>
   </data>
+  <data name="ChapterSkip" xml:space="preserve">
+    <value>Chapter skip</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="ChapterSkipRules" xml:space="preserve">
+    <value>Chapter skip rules</value>
+  </data>
+  <data name="ChapterSkipRulesDescription" xml:space="preserve">
+    <value>Skip matching chapters by title or chapter number</value>
+  </data>
+  <data name="ConfigureChapterSkip" xml:space="preserve">
+    <value>Configure chapter skip</value>
+  </data>
+  <data name="ChapterSkipScope" xml:space="preserve">
+    <value>Apply rules to</value>
+  </data>
+  <data name="ChapterSkipScopeGlobal" xml:space="preserve">
+    <value>All media</value>
+  </data>
+  <data name="ChapterSkipScopeFolder" xml:space="preserve">
+    <value>Current folder</value>
+  </data>
+  <data name="ChapterSkipScopeFile" xml:space="preserve">
+    <value>Current file</value>
+  </data>
+  <data name="ChapterSkipGlobalDescription" xml:space="preserve">
+    <value>These rules apply when no file or folder rule matches.</value>
+  </data>
+  <data name="ChapterMatchTitleContains" xml:space="preserve">
+    <value>Title contains</value>
+  </data>
+  <data name="ChapterMatchTitleEquals" xml:space="preserve">
+    <value>Title equals</value>
+  </data>
+  <data name="ChapterMatchTitleRegex" xml:space="preserve">
+    <value>Title regex</value>
+  </data>
+  <data name="ChapterMatchIndex" xml:space="preserve">
+    <value>Chapter number</value>
+  </data>
+  <data name="ChapterSkipRuleValuePlaceholder" xml:space="preserve">
+    <value>Title text or chapter number</value>
+  </data>
+  <data name="ChapterSkipAddRule" xml:space="preserve">
+    <value>Add rule</value>
+  </data>
+  <data name="ChapterSkipInvalidChapterNumber" xml:space="preserve">
+    <value>Chapter number must be 1 or greater.</value>
+  </data>
 </root>

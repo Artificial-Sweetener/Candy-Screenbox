@@ -381,6 +381,15 @@
                         <ctc:SettingsCard Header="{x:Bind strings:Resources.SettingsShowChaptersHeader}">
                             <ToggleSwitch IsOn="{x:Bind ViewModel.PlayerShowChapters, Mode=TwoWay}" />
                         </ctc:SettingsCard>
+                        <ctc:SettingsCard
+                            Description="{x:Bind strings:Resources.ChapterSkipRulesDescription}"
+                            Header="{x:Bind strings:Resources.ChapterSkipRules}">
+                            <Button CommandParameter="{x:Bind ViewModel}" Content="{x:Bind strings:Resources.ConfigureChapterSkip}">
+                                <Button.Command>
+                                    <commands:ConfigureChapterSkipCommand />
+                                </Button.Command>
+                            </Button>
+                        </ctc:SettingsCard>
                         <ctc:SettingsCard Header="{x:Bind strings:Resources.SettingsOnScreenControlsHideDelayHeader}">
                             <ComboBox
                                 MinWidth="150"

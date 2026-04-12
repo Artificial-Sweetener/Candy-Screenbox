@@ -78,6 +78,14 @@
                         Icon="{ui:FontIcon Glyph=&#xE946;}"
                         Text="{strings:Resources Key=Properties}" />
                     <MenuFlyoutItem
+                        CommandParameter="{Binding}"
+                        Icon="{ui:FontIcon Glyph=&#xE8C6;}"
+                        Text="{strings:Resources Key=ConfigureChapterSkip}">
+                        <MenuFlyoutItem.Command>
+                            <commands:ConfigureChapterSkipCommand />
+                        </MenuFlyoutItem.Command>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutItem
                         Command="{x:Bind Common.OpenAlbumCommand}"
                         CommandParameter="{Binding Album}"
                         Icon="{ui:FontIcon Glyph=&#xE93C;}"

@@ -150,6 +150,7 @@
     <Compile Include="Helpers\EnumExtensions.cs" />
     <Compile Include="Helpers\FilesHelpers.cs" />
     <Compile Include="Helpers\LanguageHelper.cs" />
+    <Compile Include="Controllers\ChapterSkipController.cs" />
     <Compile Include="Controllers\LastPositionTracker.cs" />
     <Compile Include="Helpers\ListGrouping.cs" />
     <Compile Include="Helpers\LivelyWallpaperUtil.cs" />
@@ -203,6 +204,11 @@
     <Compile Include="Messages\UpdateStatusMessage.cs" />
     <Compile Include="Messages\UpdateVolumeStatusMessage.cs" />
     <Compile Include="Models\IMediaProperties.cs" />
+    <Compile Include="Models\ChapterMatchMode.cs" />
+    <Compile Include="Models\ChapterSkipProfile.cs" />
+    <Compile Include="Models\ChapterSkipRange.cs" />
+    <Compile Include="Models\ChapterSkipRule.cs" />
+    <Compile Include="Models\ChapterSkipScope.cs" />
     <Compile Include="Models\LanguageInfo.cs" />
     <Compile Include="Models\LivelyInfoModel.cs" />
     <Compile Include="Models\LivelyMusicModel.cs" />
@@ -212,6 +218,7 @@
     <Compile Include="Models\MediaLastPosition.cs" />
     <Compile Include="Models\MusicInfo.cs" />
     <Compile Include="Models\PersistentPlaylist.cs" />
+    <Compile Include="Models\PersistentChapterSkipProfiles.cs" />
     <Compile Include="Models\PersistentStorageLibrary.cs" />
     <Compile Include="Models\PlaybackNavigationResult.cs" />
     <Compile Include="Models\Playlist.cs" />
@@ -238,8 +245,11 @@
     <Compile Include="Playback\VlcMediaPlayer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\CastService.cs" />
+    <Compile Include="Services\ChapterSkipResolver.cs" />
     <Compile Include="Contexts\PlayerContext.cs" />
+    <Compile Include="Services\ChapterSkipStore.cs" />
     <Compile Include="Services\FilesService.cs" />
+    <Compile Include="Services\IChapterSkipStore.cs" />
     <Compile Include="Services\ICastService.cs" />
     <Compile Include="Services\IFilesService.cs" />
     <Compile Include="Services\ILibraryService.cs" />

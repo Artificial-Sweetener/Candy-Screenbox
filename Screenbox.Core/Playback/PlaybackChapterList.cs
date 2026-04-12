@@ -12,6 +12,8 @@ namespace Screenbox.Core.Playback
         private readonly List<ChapterCue> _chapters;
         private readonly PlaybackItem _item;
 
+        public bool IsLoaded { get; private set; }
+
         internal PlaybackChapterList(PlaybackItem item) : base(new List<ChapterCue>())
         {
             _item = item;
@@ -39,6 +41,13 @@ namespace Screenbox.Core.Playback
             }
 
             vlcPlayer.Chapter = _chapters.FirstOrDefault();
+            IsLoaded = true;
+        }
+
+        public void EnsureLoaded(IMediaPlayer player)
+        {
+            if (IsLoaded) return;
+            Load(player);
         }
 
         private void Load(IEnumerable<ChapterDescription> vlcChapters)
