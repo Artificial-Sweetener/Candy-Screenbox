@@ -219,8 +219,11 @@
     <Compile Include="Models\MusicInfo.cs" />
     <Compile Include="Models\PersistentPlaylist.cs" />
     <Compile Include="Models\PersistentChapterSkipProfiles.cs" />
+    <Compile Include="Models\PersistentPlaybackTrackProfiles.cs" />
     <Compile Include="Models\PersistentStorageLibrary.cs" />
     <Compile Include="Models\PlaybackNavigationResult.cs" />
+    <Compile Include="Models\PlaybackTrackProfile.cs" />
+    <Compile Include="Models\PlaybackTrackScope.cs" />
     <Compile Include="Models\Playlist.cs" />
     <Compile Include="Models\NextMediaList.cs" />
     <Compile Include="Models\Renderer.cs" />
@@ -228,7 +231,12 @@
     <Compile Include="Models\PositionChangedResult.cs" />
     <Compile Include="Models\PersistentMediaRecord.cs" />
     <Compile Include="Models\SearchSuggestionItem.cs" />
+    <Compile Include="Models\SubtitlePreference.cs" />
+    <Compile Include="Models\SubtitleSelectionMode.cs" />
     <Compile Include="Models\ShuffleBackup.cs" />
+    <Compile Include="Models\TrackCandidate.cs" />
+    <Compile Include="Models\TrackPreference.cs" />
+    <Compile Include="Models\TrackSelectionMode.cs" />
     <Compile Include="Models\VideoInfo.cs" />
     <Compile Include="Playback\AudioTrack.cs" />
     <Compile Include="Helpers\DisplayRequestTracker.cs" />
@@ -257,6 +265,7 @@
     <Compile Include="Factories\IMediaListFactory.cs" />
     <Compile Include="Services\INavigationService.cs" />
     <Compile Include="Services\IPlaybackControlService.cs" />
+    <Compile Include="Services\IPlaybackTrackProfileStore.cs" />
     <Compile Include="Services\IPlayerService.cs" />
     <Compile Include="Services\IVlcDialogService.cs" />
     <Compile Include="Services\IPlaylistService.cs" />
@@ -271,6 +280,9 @@
     <Compile Include="Factories\MediaListFactory.cs" />
     <Compile Include="Services\NavigationService.cs" />
     <Compile Include="Services\PlaybackControlService.cs" />
+    <Compile Include="Services\PlaybackTrackProfileResolver.cs" />
+    <Compile Include="Services\PlaybackTrackProfileStore.cs" />
+    <Compile Include="Services\PlaybackTrackSelector.cs" />
     <Compile Include="Services\PlayerService.cs" />
     <Compile Include="Services\PlaylistService.cs" />
     <Compile Include="Services\SearchService.cs" />

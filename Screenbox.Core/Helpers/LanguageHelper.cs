@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Windows.ApplicationModel.Resources;
+using Windows.Globalization;
 
 namespace Screenbox.Core.Helpers;
 internal static class LanguageHelper
@@ -17,5 +18,18 @@ internal static class LanguageHelper
     public static string GetPreferredLanguage()
     {
         return Windows.System.UserProfile.GlobalizationPreferences.Languages.FirstOrDefault() ?? string.Empty;
+    }
+
+    public static string NormalizeLanguageTag(string value)
+    {
+        string language = value.Trim();
+        if (string.IsNullOrEmpty(language)) return string.Empty;
+
+        if (TryConvertISO6392ToISO6391(language.ToLowerInvariant(), out string twoLetterTag))
+            language = twoLetterTag;
+
+        return Language.IsWellFormed(language)
+            ? new Language(language).LanguageTag.ToLowerInvariant()
+            : string.Empty;
     }
 }

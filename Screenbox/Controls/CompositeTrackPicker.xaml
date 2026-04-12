@@ -172,5 +172,53 @@
                 <ListViewItem Content="Spanish (Latin America) (Castellano)" />
             </d:ListView.Items>
         </ListView>
+
+        <!--  Track preferences  -->
+        <MenuFlyoutSeparator IsTabStop="False" />
+        <Grid MinHeight="{StaticResource ListViewItemMinHeight}" Margin="4,0">
+            <TextBlock
+                Padding="12,0,0,0"
+                VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="{strings:Resources Key=TrackPreferences}"
+                TextWrapping="NoWrap" />
+        </Grid>
+        <Button
+            MinHeight="36"
+            Margin="{StaticResource MenuFlyoutItemMargin}"
+            Padding="12,4"
+            HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Left"
+            Command="{x:Bind ViewModel.SaveFileTrackPreferenceCommand}"
+            Content="{strings:Resources Key=UseCurrentTracksForFile}"
+            Style="{StaticResource SubtleButtonStyle}" />
+        <Button
+            MinHeight="36"
+            Margin="{StaticResource MenuFlyoutItemMargin}"
+            Padding="12,4"
+            HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Left"
+            Command="{x:Bind ViewModel.SaveFolderTrackPreferenceCommand}"
+            Content="{strings:Resources Key=UseCurrentTracksForFolder}"
+            Style="{StaticResource SubtleButtonStyle}" />
+        <Button
+            MinHeight="36"
+            Margin="{StaticResource MenuFlyoutItemMargin}"
+            Padding="12,4"
+            HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Left"
+            Command="{x:Bind ViewModel.ClearFileTrackPreferenceCommand}"
+            Content="{strings:Resources Key=ClearFileTrackPreference}"
+            Style="{StaticResource SubtleButtonStyle}" />
+        <Button
+            MinHeight="36"
+            Margin="{StaticResource MenuFlyoutItemMargin}"
+            Padding="12,4"
+            HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Left"
+            Command="{x:Bind ViewModel.ClearFolderTrackPreferenceCommand}"
+            Content="{strings:Resources Key=ClearFolderTrackPreference}"
+            Style="{StaticResource SubtleButtonStyle}" />
     </StackPanel>
 </UserControl>

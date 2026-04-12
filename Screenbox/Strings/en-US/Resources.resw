@@ -1116,4 +1116,19 @@
   <data name="ChapterSkipInvalidChapterNumber" xml:space="preserve">
     <value>Chapter number must be 1 or greater.</value>
   </data>
+  <data name="TrackPreferences" xml:space="preserve">
+    <value>Track preferences</value>
+  </data>
+  <data name="UseCurrentTracksForFile" xml:space="preserve">
+    <value>Use current tracks for this file</value>
+  </data>
+  <data name="UseCurrentTracksForFolder" xml:space="preserve">
+    <value>Use current tracks for this folder</value>
+  </data>
+  <data name="ClearFileTrackPreference" xml:space="preserve">
+    <value>Clear file track preference</value>
+  </data>
+  <data name="ClearFolderTrackPreference" xml:space="preserve">
+    <value>Clear folder track preference</value>
+  </data>
 </root>

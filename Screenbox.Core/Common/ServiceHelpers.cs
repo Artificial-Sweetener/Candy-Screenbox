@@ -75,6 +75,9 @@ public static class ServiceHelpers
         services.AddSingleton<ILivelyWallpaperService, LivelyWallpaperService>();
         services.AddSingleton<ChapterSkipResolver>();
         services.AddSingleton<IChapterSkipStore, ChapterSkipStore>();
+        services.AddSingleton<PlaybackTrackProfileResolver>();
+        services.AddSingleton<PlaybackTrackSelector>();
+        services.AddSingleton<IPlaybackTrackProfileStore, PlaybackTrackProfileStore>();
         services.AddSingleton<IPlaybackControlService, PlaybackControlService>();
         services.AddSingleton<IPlaylistService, PlaylistService>();
     }

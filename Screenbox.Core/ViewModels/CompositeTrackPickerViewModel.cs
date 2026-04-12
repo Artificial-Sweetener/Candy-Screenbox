@@ -15,6 +15,7 @@ using Screenbox.Core.Contexts;
 using Screenbox.Core.Enums;
 using Screenbox.Core.Helpers;
 using Screenbox.Core.Messages;
+using Screenbox.Core.Models;
 using Screenbox.Core.Playback;
 using Screenbox.Core.Services;
 using Windows.Storage;
@@ -25,6 +26,8 @@ namespace Screenbox.Core.ViewModels;
 public sealed partial class CompositeTrackPickerViewModel : ObservableRecipient,
     IRecipient<PlaylistCurrentItemChangedMessage>
 {
+    private static readonly string[] SubtitleLabelHints = ["sign", "song", "forced", "full", "default"];
+
     public ObservableCollection<string> SubtitleTracks { get; }
 
     public ObservableCollection<string> AudioTracks { get; }
@@ -60,16 +63,22 @@ public sealed partial class CompositeTrackPickerViewModel : ObservableRecipient,
     [ObservableProperty] private int _videoTrackIndex;
 
     private readonly IFilesService _filesService;
-    private readonly ISettingsService _settingsService;
+    private readonly IPlaybackTrackProfileStore _trackProfileStore;
+    private readonly PlaybackTrackProfileResolver _trackProfileResolver;
+    private readonly PlaybackTrackSelector _trackSelector;
     private readonly PlayerContext _playerContext;
+    private MediaViewModel? _currentMedia;
     private bool _flyoutOpened;
     private CancellationTokenSource? _cts;
 
     public CompositeTrackPickerViewModel(PlayerContext playerContext, IFilesService filesService,
-        ISettingsService settingsService)
+        IPlaybackTrackProfileStore trackProfileStore,
+        PlaybackTrackProfileResolver trackProfileResolver, PlaybackTrackSelector trackSelector)
     {
         _filesService = filesService;
-        _settingsService = settingsService;
+        _trackProfileStore = trackProfileStore;
+        _trackProfileResolver = trackProfileResolver;
+        _trackSelector = trackSelector;
         _playerContext = playerContext;
         SubtitleTracks = new ObservableCollection<string>();
         AudioTracks = new ObservableCollection<string>();
@@ -84,14 +93,16 @@ public sealed partial class CompositeTrackPickerViewModel : ObservableRecipient,
     public async void Receive(PlaylistCurrentItemChangedMessage message)
     {
         _cts?.Cancel();
+        _currentMedia = null;
+        NotifyProfileCommandCanExecuteChanged();
         if (MediaPlayer is not VlcMediaPlayer player) return;
         if (message.Value is not { Source: StorageFile file, MediaType: MediaPlaybackType.Video } media)
             return;
 
-        bool subtitleInitialized = false;
-        var playbackSubtitleTrackList = media.Item.Value?.SubtitleTracks;
-        if (playbackSubtitleTrackList == null) return;
-        if (playbackSubtitleTrackList.Count > 0) subtitleInitialized = true;
+        _currentMedia = media;
+        var playbackItem = media.Item.Value;
+        if (playbackItem == null) return;
+        var playbackSubtitleTrackList = playbackItem.SubtitleTracks;
         IReadOnlyList<StorageFile> subtitles = await GetSubtitlesForFile(file, message.NeighboringFilesQuery);
         foreach (StorageFile subtitleFile in subtitles)
         {
@@ -99,55 +110,36 @@ public sealed partial class CompositeTrackPickerViewModel : ObservableRecipient,
             playbackSubtitleTrackList.AddExternalSubtitle(player, subtitleFile, false);
         }
 
-        if (!subtitleInitialized && media.Item.Value is { } playbackItem)
+        try
         {
-            try
-            {
-                using var cts = new CancellationTokenSource();
-                _cts = cts;
-                await playbackItem.Media.WaitForParsed(TimeSpan.FromSeconds(5), cts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                // pass
-            }
-            finally
-            {
+            using var cts = new CancellationTokenSource();
+            _cts = cts;
+            await playbackItem.Media.WaitForParsed(TimeSpan.FromSeconds(5), cts.Token);
+
+            if (cts.IsCancellationRequested || !ReferenceEquals(_currentMedia, media)) return;
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        finally
+        {
+            if (_cts?.IsCancellationRequested == true || ReferenceEquals(_currentMedia, media))
                 _cts = null;
-            }
         }
 
-        TrySetSubtitleFromLanguage(playbackSubtitleTrackList, _settingsService.PersistentSubtitleLanguage);
-    }
+        await _trackProfileStore.LoadAsync();
+        if (!ReferenceEquals(_currentMedia, media)) return;
 
-    private static void TrySetSubtitleFromLanguage(PlaybackSubtitleTrackList subtitleTrackList, string persistentLanguage)
-    {
-        // Check persistent subtitle value to try and select a subtitle
-        if (!string.IsNullOrEmpty(persistentLanguage))
+        PlaybackTrackProfile? profile = _trackProfileResolver.GetEffectiveProfile(media.Location, _trackProfileStore.Profiles);
+        _trackSelector.Apply(playbackItem.AudioTracks, playbackItem.SubtitleTracks, profile, LanguageHelper.GetPreferredLanguage());
+
+        if (_flyoutOpened)
         {
-            // If there is only one subtitle then select it
-            if (subtitleTrackList.Count == 1)
-            {
-                subtitleTrackList.SelectedIndex = 0;
-                return;
-            }
-
-            // Try to select the subtitle with the same language as the persistent value
-            var langPreferences = persistentLanguage.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            foreach (string language in langPreferences)
-            {
-                for (int i = 0; i < subtitleTrackList.Count; i++)
-                {
-                    var subtitleTrack = subtitleTrackList[i];
-                    // Try to match language tag first, then language name
-                    if (language == subtitleTrack.LanguageTag || language.Equals(subtitleTrack.Language, StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        subtitleTrackList.SelectedIndex = i;
-                        break;
-                    }
-                }
-            }
+            RefreshTrackLists();
         }
+
+        NotifyProfileCommandCanExecuteChanged();
     }
 
     private async Task<IReadOnlyList<StorageFile>> GetSubtitlesForFile(StorageFile sourceFile, StorageFileQueryResult? neighboringFilesQuery = null)
@@ -233,24 +225,17 @@ public sealed partial class CompositeTrackPickerViewModel : ObservableRecipient,
         if (value >= ItemSubtitleTrackList.Count) return;
         ItemSubtitleTrackList.SelectedIndex = value;
 
-        if (!_flyoutOpened) return;
-
-        if (value < 0)
-        {
-            _settingsService.PersistentSubtitleLanguage = string.Empty;
-        }
-        else if (value < SubtitleTracks.Count)
-        {
-            var subtitle = ItemSubtitleTrackList[value];
-            _settingsService.PersistentSubtitleLanguage =
-                $"{subtitle.LanguageTag},{subtitle.Language},{LanguageHelper.GetPreferredLanguage().Substring(0, 2)}";
-        }
+        if (_flyoutOpened)
+            NotifyProfileCommandCanExecuteChanged();
     }
 
     partial void OnAudioTrackIndexChanged(int value)
     {
         if (ItemAudioTrackList != null && value >= 0 && value < ItemAudioTrackList.Count)
             ItemAudioTrackList.SelectedIndex = value;
+
+        if (_flyoutOpened)
+            NotifyProfileCommandCanExecuteChanged();
     }
 
     partial void OnVideoTrackIndexChanged(int value)
@@ -283,14 +268,10 @@ public sealed partial class CompositeTrackPickerViewModel : ObservableRecipient,
 
     public void OnFlyoutOpening()
     {
-        UpdateSubtitleTrackList();
-        UpdateAudioTrackList();
-        UpdateVideoTrackList();
-        SubtitleTrackIndex = (ItemSubtitleTrackList?.SelectedIndex + 1) ?? 0;
-        AudioTrackIndex = ItemAudioTrackList?.SelectedIndex ?? -1;
-        VideoTrackIndex = ItemVideoTrackList?.SelectedIndex ?? -1;
+        RefreshTrackLists();
 
         _flyoutOpened = true;
+        NotifyProfileCommandCanExecuteChanged();
     }
 
     public void OnFlyoutClosed()
@@ -319,5 +300,180 @@ public sealed partial class CompositeTrackPickerViewModel : ObservableRecipient,
         if (ItemSubtitleTrackList == null) return;
         var trackLabels = ItemSubtitleTrackList.Select(track => track.Label).ToList();
         SubtitleTracks.SyncItems(trackLabels);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSaveFileTrackPreference))]
+    private async Task SaveFileTrackPreferenceAsync()
+    {
+        if (_currentMedia is not { Source: StorageFile file }) return;
+
+        await SaveTrackPreferenceAsync(PlaybackTrackScope.File, file.Path);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSaveFolderTrackPreference))]
+    private async Task SaveFolderTrackPreferenceAsync()
+    {
+        if (_currentMedia is not { Source: StorageFile file }) return;
+
+        StorageFolder? folder = await file.GetParentAsync();
+        if (folder == null || string.IsNullOrWhiteSpace(folder.Path)) return;
+
+        await SaveTrackPreferenceAsync(PlaybackTrackScope.Folder, folder.Path);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSaveFileTrackPreference))]
+    private async Task ClearFileTrackPreferenceAsync()
+    {
+        if (_currentMedia is not { Source: StorageFile file }) return;
+
+        await _trackProfileStore.RemoveProfileAsync(PlaybackTrackScope.File, file.Path);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSaveFolderTrackPreference))]
+    private async Task ClearFolderTrackPreferenceAsync()
+    {
+        if (_currentMedia is not { Source: StorageFile file }) return;
+
+        StorageFolder? folder = await file.GetParentAsync();
+        if (folder == null || string.IsNullOrWhiteSpace(folder.Path)) return;
+
+        await _trackProfileStore.RemoveProfileAsync(PlaybackTrackScope.Folder, folder.Path);
+    }
+
+    private async Task SaveTrackPreferenceAsync(PlaybackTrackScope scope, string location)
+    {
+        if (ItemAudioTrackList == null || ItemSubtitleTrackList == null || string.IsNullOrWhiteSpace(location)) return;
+
+        PlaybackTrackProfile profile = new()
+        {
+            Scope = scope,
+            Location = location,
+            Audio = CreateAudioPreference(ItemAudioTrackList),
+            Subtitle = CreateSubtitlePreference(ItemSubtitleTrackList)
+        };
+
+        await _trackProfileStore.SetProfileAsync(profile);
+    }
+
+    private bool CanSaveFileTrackPreference() =>
+        _currentMedia is { Source: StorageFile file } && !string.IsNullOrWhiteSpace(file.Path);
+
+    private bool CanSaveFolderTrackPreference() =>
+        _currentMedia is { Source: StorageFile file } && !string.IsNullOrWhiteSpace(file.Path);
+
+    private static TrackPreference CreateAudioPreference(PlaybackAudioTrackList audioTracks)
+    {
+        if (audioTracks.SelectedIndex < 0 || audioTracks.SelectedIndex >= audioTracks.Count)
+        {
+            return new TrackPreference
+            {
+                Mode = TrackSelectionMode.First
+            };
+        }
+
+        return new TrackPreference
+        {
+            Mode = TrackSelectionMode.Specific,
+            Candidates = CreateAudioCandidates(audioTracks[audioTracks.SelectedIndex], audioTracks.SelectedIndex)
+        };
+    }
+
+    private static SubtitlePreference CreateSubtitlePreference(PlaybackSubtitleTrackList subtitleTracks)
+    {
+        if (subtitleTracks.SelectedIndex < 0)
+        {
+            return new SubtitlePreference
+            {
+                Mode = SubtitleSelectionMode.Off
+            };
+        }
+
+        return new SubtitlePreference
+        {
+            Mode = SubtitleSelectionMode.Specific,
+            Candidates = CreateSubtitleCandidates(subtitleTracks[subtitleTracks.SelectedIndex], subtitleTracks.SelectedIndex)
+        };
+    }
+
+    private static List<TrackCandidate> CreateAudioCandidates(MediaTrack track, int index)
+    {
+        List<TrackCandidate> candidates = new();
+        AddLanguageCandidates(candidates, track, null);
+
+        if (candidates.Count == 0 && !string.IsNullOrWhiteSpace(track.Label))
+        {
+            candidates.Add(new TrackCandidate { LabelEquals = track.Label });
+        }
+
+        if (candidates.Count == 0)
+        {
+            candidates.Add(new TrackCandidate { Index = index });
+        }
+
+        return candidates;
+    }
+
+    private static List<TrackCandidate> CreateSubtitleCandidates(MediaTrack track, int index)
+    {
+        List<TrackCandidate> candidates = new();
+        foreach (string hint in SubtitleLabelHints)
+        {
+            if (track.Label.IndexOf(hint, StringComparison.OrdinalIgnoreCase) >= 0)
+                AddLanguageCandidates(candidates, track, hint);
+        }
+
+        AddLanguageCandidates(candidates, track, null);
+
+        if (candidates.Count == 0 && !string.IsNullOrWhiteSpace(track.Label))
+        {
+            candidates.Add(new TrackCandidate { LabelEquals = track.Label });
+        }
+
+        if (candidates.Count == 0)
+        {
+            candidates.Add(new TrackCandidate { Index = index });
+        }
+
+        return candidates;
+    }
+
+    private static void AddLanguageCandidates(List<TrackCandidate> candidates, MediaTrack track, string? labelContains)
+    {
+        if (!string.IsNullOrWhiteSpace(track.LanguageTag))
+        {
+            candidates.Add(new TrackCandidate
+            {
+                LanguageTag = track.LanguageTag,
+                LabelContains = labelContains ?? string.Empty
+            });
+        }
+
+        if (!string.IsNullOrWhiteSpace(track.Language) &&
+            !track.Language.Equals(track.LanguageTag, StringComparison.OrdinalIgnoreCase))
+        {
+            candidates.Add(new TrackCandidate
+            {
+                LanguageName = track.Language,
+                LabelContains = labelContains ?? string.Empty
+            });
+        }
+    }
+
+    private void RefreshTrackLists()
+    {
+        UpdateSubtitleTrackList();
+        UpdateAudioTrackList();
+        UpdateVideoTrackList();
+        SubtitleTrackIndex = (ItemSubtitleTrackList?.SelectedIndex + 1) ?? 0;
+        AudioTrackIndex = ItemAudioTrackList?.SelectedIndex ?? -1;
+        VideoTrackIndex = ItemVideoTrackList?.SelectedIndex ?? -1;
+    }
+
+    private void NotifyProfileCommandCanExecuteChanged()
+    {
+        SaveFileTrackPreferenceCommand.NotifyCanExecuteChanged();
+        SaveFolderTrackPreferenceCommand.NotifyCanExecuteChanged();
+        ClearFileTrackPreferenceCommand.NotifyCanExecuteChanged();
+        ClearFolderTrackPreferenceCommand.NotifyCanExecuteChanged();
     }
 }
