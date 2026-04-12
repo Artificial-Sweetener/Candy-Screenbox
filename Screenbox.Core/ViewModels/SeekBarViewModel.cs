@@ -96,6 +96,7 @@ public sealed partial class SeekBarViewModel :
             MediaPlayer.BufferingEnded += OnBufferingEnded;
             MediaPlayer.PlaybackItemChanged += OnPlaybackItemChanged;
             MediaPlayer.CanSeekChanged += OnCanSeekChanged;
+            MediaPlayer.ChapterChanged += OnChapterChanged;
         }
 
         // Activate the view model's messenger
@@ -139,6 +140,7 @@ public sealed partial class SeekBarViewModel :
             oldPlayer.BufferingEnded -= OnBufferingEnded;
             oldPlayer.PlaybackItemChanged -= OnPlaybackItemChanged;
             oldPlayer.CanSeekChanged -= OnCanSeekChanged;
+            oldPlayer.ChapterChanged -= OnChapterChanged;
         }
 
         if (MediaPlayer != null)
@@ -151,6 +153,7 @@ public sealed partial class SeekBarViewModel :
             MediaPlayer.BufferingEnded += OnBufferingEnded;
             MediaPlayer.PlaybackItemChanged += OnPlaybackItemChanged;
             MediaPlayer.CanSeekChanged += OnCanSeekChanged;
+            MediaPlayer.ChapterChanged += OnChapterChanged;
 
             if (!_lastPositionTracker.IsLoaded)
             {
@@ -290,15 +293,35 @@ public sealed partial class SeekBarViewModel :
 
     private void OnPlaybackStateChanged(IMediaPlayer sender, ValueChangedEventArgs<MediaPlaybackState> args)
     {
-        if (args.NewValue is not (MediaPlaybackState.None or MediaPlaybackState.Opening) &&
-            _lastTrackedPosition > TimeSpan.Zero)
+        if (args.NewValue is not (MediaPlaybackState.None or MediaPlaybackState.Opening))
         {
-            _dispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+            if (_lastTrackedPosition > TimeSpan.Zero)
             {
-                SetPlayerPosition(_lastTrackedPosition, false);
-                _lastTrackedPosition = TimeSpan.Zero;
+                _dispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+                {
+                    SetPlayerPosition(_lastTrackedPosition, false);
+                    _lastTrackedPosition = TimeSpan.Zero;
+                });
+            }
+
+            _dispatcherQueue.TryEnqueue(() =>
+            {
+                Length = sender.NaturalDuration.TotalMilliseconds;
+                IsSeekable = sender.CanSeek;
+                if (Chapters.Count == 0)
+                    UpdateChapters(sender.PlaybackItem?.Chapters);
             });
         }
+    }
+
+    private void OnChapterChanged(IMediaPlayer sender, ValueChangedEventArgs<ChapterCue?> args)
+    {
+        _dispatcherQueue.TryEnqueue(() =>
+        {
+            PlaybackChapterList? chapterList = sender.PlaybackItem?.Chapters;
+            if (chapterList is { IsLoaded: true } && Chapters.Count != chapterList.Count)
+                UpdateChapters(chapterList);
+        });
     }
 
     private void OnPlaybackItemChanged(IMediaPlayer sender, object? args)
@@ -380,14 +403,12 @@ public sealed partial class SeekBarViewModel :
     {
         Chapters.Clear();
         if (chapterList == null) return;
-        if (MediaPlayer != null)
+        if (MediaPlayer != null && chapterList.TryLoad(MediaPlayer))
         {
-            chapterList.EnsureLoaded(MediaPlayer);
-        }
-
-        foreach (ChapterCue chapterCue in chapterList)
-        {
-            Chapters.Add(chapterCue);
+            foreach (ChapterCue chapterCue in chapterList)
+            {
+                Chapters.Add(chapterCue);
+            }
         }
         // Chapters.SyncItems(chapterList);
     }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Windows.Media.Core;
+using Windows.Media.Playback;
 
 namespace Screenbox.Core.Playback
 {
@@ -20,10 +21,19 @@ namespace Screenbox.Core.Playback
             _chapters = (List<ChapterCue>)Items;
         }
 
-        public void Load(IMediaPlayer player)
+        public bool TryLoad(IMediaPlayer player)
         {
-            if (player is not VlcMediaPlayer vlcPlayer || player.PlaybackItem != _item)
-                return;
+            if (IsLoaded) return true;
+            return Load(player);
+        }
+
+        public bool Load(IMediaPlayer player)
+        {
+            if (player is not VlcMediaPlayer vlcPlayer)
+                return false;
+
+            if (!CanReadChapters(vlcPlayer))
+                return false;
 
             if (vlcPlayer.VlcPlayer.ChapterCount > 0)
             {
@@ -40,14 +50,17 @@ namespace Screenbox.Core.Playback
                 Load(vlcPlayer.VlcPlayer.FullChapterDescriptions());
             }
 
-            vlcPlayer.Chapter = _chapters.FirstOrDefault();
             IsLoaded = true;
+            vlcPlayer.Chapter = _chapters.FirstOrDefault();
+            return true;
         }
 
-        public void EnsureLoaded(IMediaPlayer player)
+        private bool CanReadChapters(VlcMediaPlayer player)
         {
-            if (IsLoaded) return;
-            Load(player);
+            return ChapterLoadState.CanReadChapters(
+                player.PlaybackItem == _item,
+                player.PlaybackState == MediaPlaybackState.Opening,
+                player.NaturalDuration);
         }
 
         private void Load(IEnumerable<ChapterDescription> vlcChapters)

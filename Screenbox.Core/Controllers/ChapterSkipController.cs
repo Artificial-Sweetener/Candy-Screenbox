@@ -165,7 +165,7 @@ public sealed class ChapterSkipController : ObservableRecipient,
         await _chapterSkipStore.LoadAsync();
 
         PlaybackChapterList chapters = player.PlaybackItem.Chapters;
-        chapters.EnsureLoaded(player);
+        if (!chapters.TryLoad(player)) return;
         if (chapters.Count == 0) return;
 
         TimeSpan position = player.Position;

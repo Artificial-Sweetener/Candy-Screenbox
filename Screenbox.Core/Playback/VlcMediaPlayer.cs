@@ -258,10 +258,12 @@ namespace Screenbox.Core.Playback
                     VlcPlayer.Stop();
                     if (_playbackItem != null) RemoveItemHandlers(_playbackItem);
                     _playbackItem = null;
+                    ResetMediaState();
                 }
                 else
                 {
                     _playbackItem = value;
+                    ResetMediaState();
                     RegisterItemHandlers(_playbackItem);
                     _readyToPlay = true;
                     _updateMediaProperties = true;
@@ -327,10 +329,39 @@ namespace Screenbox.Core.Playback
 
         private void VlcPlayer_SeekableChanged(object sender, MediaPlayerSeekableChangedEventArgs e)
         {
-            bool seekable = e.Seekable > 0;
-            if (CanSeek == seekable) return;
-            CanSeek = seekable;
+            SetCanSeek(e.Seekable > 0);
+        }
+
+        private void SetCanSeek(bool canSeek)
+        {
+            if (CanSeek == canSeek) return;
+            CanSeek = canSeek;
             CanSeekChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void ResetMediaState()
+        {
+            Chapter = null;
+            NaturalDuration = TimeSpan.Zero;
+            SetCanSeek(false);
+            ResetPosition();
+            ResetVideoSize();
+        }
+
+        private void ResetPosition()
+        {
+            if (_position == TimeSpan.Zero) return;
+            TimeSpan oldValue = _position;
+            _position = TimeSpan.Zero;
+            PositionChanged?.Invoke(this, new ValueChangedEventArgs<TimeSpan>(TimeSpan.Zero, oldValue));
+        }
+
+        private void ResetVideoSize()
+        {
+            if (NaturalVideoWidth == 0 && NaturalVideoHeight == 0) return;
+            NaturalVideoWidth = 0;
+            NaturalVideoHeight = 0;
+            NaturalVideoSizeChanged?.Invoke(this, EventArgs.Empty);
         }
 
         private void VlcPlayer_TimeChanged(object sender, MediaPlayerTimeChangedEventArgs e)
