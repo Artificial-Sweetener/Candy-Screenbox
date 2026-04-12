@@ -1,87 +1,103 @@
-<p align="center">
-  <img width="128" align="center" src="Screenbox/Assets/StoreLogo.scale-400.png">
-</p>
-<h1 align="center">
-  Screenbox
-</h1>
-<p align="center">
-  The modern media player for Windows
-</p>
-<p align="center">
-  <a href='https://apps.microsoft.com/detail/9NTSNMSVCB5L?cid=storebadge&mode=mini'>
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://get.microsoft.com/images/en-us%20light.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://get.microsoft.com/images/en-us%20dark.svg">
-      <img alt="Store link" src="https://get.microsoft.com/images/en-us%20dark.svg" height="50px">
-    </picture>
-  </a>
-</p>
+# Candy-Screenbox
 
-Screenbox is a modern video player that cares about performance and ease of use on a wide range of device types. It features a beautiful, friendly user interface that is fast and lightweight. Screenbox is available on Windows 10 version 1903 and up, Windows 11, and Xbox consoles.
+**Candy-Screenbox** is my fork of [Screenbox](https://github.com/huynhsontung/Screenbox).
 
-Screenbox is built on top of [LibVLCSharp](https://github.com/videolan/libvlcsharp) and the Universal Windows Platform (UWP).
+Screenbox is already a good modern Windows media player. This fork keeps that foundation and adds the stuff I wanted for watching anime with chapters, multiple audio tracks, and subtitle tracks that need to behave the same way every time.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="/assets/images/docs/PC-HeroHomePage-Dark.png?raw=true">
-  <source media="(prefers-color-scheme: light)" srcset="/assets/images/docs/PC-HeroHomePage-Light.png?raw=true">
-  <img alt="Screenshot of the Screenbox home page." src="/assets/images/docs/PC-HeroHomePage-Dark.png?raw=true" width="1248">
-</picture>
+In short: this is Screenbox, but with automatic chapter skipping and better audio/subtitle defaults.
 
-![Screenshot of the Screenbox video player](/assets/images/docs/PC-HeroPlayerPageVideo_Dark.png)
+## Why This Exists
 
-Some notable features:
+If you have a folder full of episodes where every file has an intro chapter, a credits chapter, multiple audio tracks, and a full English subtitle track, the normal flow gets repetitive fast.
 
-- Fluent design user interface
-- Gesture support for seeking and changing volume
-- Window resize hotkeys (number row `1`-`4`)
-- YouTube-inspired hotkey layout
-- Picture-in-picture mode
-- Save the video frame as an image
-- Chromecast support
-- Browse and play media over the network
+Candy-Screenbox is for that problem.
 
-And many more on the way!
+- Pick the audio and subtitle tracks you actually want.
+- Save them for a file or a whole folder.
+- Tell the app which chapters to skip.
+- Open the next file and let the app do the boring part.
+
+## What Changed From Upstream
+
+### Chapter Skip Rules
+
+Candy-Screenbox can automatically skip chapters that match your rules.
+
+Rules can apply to:
+
+- the current file
+- the current folder
+- all media
+
+Rules can match by:
+
+- chapter title contains
+- chapter title equals
+- chapter title regex
+- chapter number
+
+This is useful for skipping intros, recaps, previews, credits, or whatever else your files already mark with chapter metadata.
+
+You can configure chapter skipping from the player controls, the play queue context menu, or the settings page.
+
+### Audio And Subtitle Track Preferences
+
+Candy-Screenbox lets you save the current audio and subtitle choices from the audio/captions flyout.
+
+Preferences can apply to:
+
+- the current file
+- the current folder
+
+When a matching file opens later, Candy-Screenbox tries to pick the same kind of track again. It prefers stable metadata like language and labels, and falls back to track position when that is all the file gives us.
+
+This is the "please stop making me pick Japanese audio and full English subtitles every episode" feature.
+
+### Chapter Loading Fixes
+
+This fork also fixes chapter loading across media transitions.
+
+The app waits until the active file is actually ready before caching chapter data, so opening the next file in a folder does not keep stale chapters from the previous file.
+
+## What Is Still Screenbox
+
+Most of Candy-Screenbox is still Screenbox.
+
+The app still uses the upstream UWP app structure and [LibVLCSharp](https://github.com/videolan/libvlcsharp). The media library, playback controls, network playback, picture-in-picture mode, frame capture, and the rest of the normal Screenbox experience are still here unless this fork changes something directly.
 
 ## Install
 
-The recommended way to install Screenbox is through the [Microsoft Store](https://www.microsoft.com/store/apps/9NTSNMSVCB5L). Installing through the store ensures the app stays up to date automatically. You don't need a Microsoft account to download apps from the store. The app can also be installed through winget using the following command.
+Candy-Screenbox is packaged as `Candy-Screenbox`.
 
-```shell
-winget install screenbox -s winget
+The Microsoft Store and winget packages for Screenbox install upstream Screenbox, not this fork.
+
+For now, this is a local MSIX build. Build `Screenbox.sln` for `x64`, sign the generated package with a certificate trusted by Windows, and install the MSIX.
+
+## Build
+
+Prerequisites:
+
+- Windows 11
+- Visual Studio 2022 with the UWP development workload
+- Windows 10 SDK
+- x64 build platform
+
+Build from Visual Studio by opening `Screenbox.sln`, selecting `x64`, and building the solution.
+
+For command-line builds, use Visual Studio MSBuild. `dotnet build` does not have the Windows XAML targets this UWP project needs.
+
+```powershell
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe' .\Screenbox.sln /t:Build /p:Configuration=Debug /p:Platform=x64
 ```
 
-## Contribute
+## Upstream
 
-Feel free to open an issue if you want to report a bug, give feedback, or ask a question. PRs are very welcome!
+Candy-Screenbox exists because Screenbox is already a nice base to build from.
 
-### For Contributors
+- [Screenbox upstream repository](https://github.com/huynhsontung/Screenbox)
+- [Contributing guide](CONTRIBUTING.md)
+- [Project structure](docs/PROJECT_STRUCTURE.md)
 
-- 📖 **[Contributing Guide](CONTRIBUTING.md)** - Complete guide for new contributors
-- 🏗️ **[Project Structure](docs/PROJECT_STRUCTURE.md)** - Detailed codebase architecture overview
+## License
 
-### Quick Start for Developers
-
-1. **Prerequisites**: Visual Studio 2022 with UWP development workload
-2. **Clone**: `git clone https://github.com/huynhsontung/Screenbox.git`
-3. **Build**: Open `Screenbox.sln` and build the solution (Ctrl+Shift+B)
-4. **Run**: Set platform to x64 and start debugging (F5)
-
-See the [Contributing Guide](CONTRIBUTING.md) for detailed setup instructions.
-
-## Translation
-
-[![Crowdin](https://badges.crowdin.net/screenbox/localized.svg)](https://crowdin.com/project/screenbox)
-
-Help translate the app to your language on [Crowdin](https://crowdin.com/project/screenbox)! Crowdin offers an intuitive UX for you to get started and is the recommended tool for localization. Translations are automatically synced to GitHub and published in the next minor update.
-
-You can also translate the app locally without Crowdin. The project source language is English, United States. All localizable source files are in the `Screenbox\Strings\en-US` directory. Localizable file types are `.resw` and `.md`.
-
-Make sure you have your translations in the appropriate folder under the `Screenbox\Strings` directory. We use a [IETF language tag](https://www.venea.net/web/culture_code) to name the folder that contains resources for that language (e.g. `fr-FR` for French (France), `es-ES` for Spanish (Spain)). Files in these folders are translated copies of the original resource files in `Screenbox\Strings\en-US`.
-
-A typical workflow for translating resources:
-
-1. Fork and clone this repo.
-1. Create a folder for your language under `Screenbox\Strings` if there isn't one already.
-1. Copy over any missing files from the `en-US` folder. 
-1. Translate the `.resw` and `.md` files in the directory.
-1. Once you're done, commit your changes, push to GitHub, and make a pull request.
+Candy-Screenbox follows the upstream Screenbox license. See [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).
