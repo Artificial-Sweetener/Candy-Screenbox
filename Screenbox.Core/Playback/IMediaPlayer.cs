@@ -47,6 +47,7 @@ namespace Screenbox.Core.Playback
         public PlaybackItem? PlaybackItem { get; set; }
 
         void Close();
+        void Stop();
         void Play();
         void Pause();
         void StepForwardOneFrame();

@@ -8,6 +8,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
+    <Compile Include="..\Screenbox.Core\Controllers\ChapterSkipPlanner.cs" Link="Controllers\ChapterSkipPlanner.cs" />
+    <Compile Include="..\Screenbox.Core\Models\ChapterMatchMode.cs" Link="Models\ChapterMatchMode.cs" />
+    <Compile Include="..\Screenbox.Core\Models\ChapterSkipRange.cs" Link="Models\ChapterSkipRange.cs" />
+    <Compile Include="..\Screenbox.Core\Models\ChapterSkipRule.cs" Link="Models\ChapterSkipRule.cs" />
     <Compile Include="..\Screenbox.Core\Playback\ChapterLoadState.cs" Link="Playback\ChapterLoadState.cs" />
   </ItemGroup>
 </Project>

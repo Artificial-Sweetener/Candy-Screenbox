@@ -35,6 +35,7 @@ public sealed partial class MediaListViewModel : ObservableRecipient,
     IRecipient<PlayFilesMessage>,
     IRecipient<QueuePlaylistMessage>,
     IRecipient<ClearPlaylistMessage>,
+    IRecipient<PlaybackEndedRequestMessage>,
     IRecipient<PlaylistRequestMessage>,
     IRecipient<PropertyChangedMessage<IMediaPlayer?>>
 {
@@ -181,6 +182,11 @@ public sealed partial class MediaListViewModel : ObservableRecipient,
     public void Receive(PlaylistRequestMessage message)
     {
         message.Reply(new Playlist(_playlist));
+    }
+
+    public void Receive(PlaybackEndedRequestMessage message)
+    {
+        _dispatcherQueue.TryEnqueue(() => HandleMediaEnded(MediaPlayer, true));
     }
 
     public async void Receive(PlayMediaMessage message)
@@ -654,26 +660,32 @@ public sealed partial class MediaListViewModel : ObservableRecipient,
 
     private void OnEndReached(IMediaPlayer sender, object? args)
     {
-        _dispatcherQueue.TryEnqueue(() =>
-        {
-            var playlist = _playlist;
-            var result = _playbackControlService.HandleMediaEnded(playlist, RepeatMode);
-            if (result != null)
-            {
-                if (result.UpdatedPlaylist != null)
-                {
-                    // Playlist was replaced (neighboring file navigation)
-                    LoadFromPlaylist(result.UpdatedPlaylist);
-                }
+        _dispatcherQueue.TryEnqueue(() => HandleMediaEnded(sender, false));
+    }
 
-                PlaySingle(result.NextItem);
-            }
-            else if (RepeatMode == MediaPlaybackAutoRepeatMode.Track)
+    private void HandleMediaEnded(IMediaPlayer? sender, bool stopWhenNoNavigation)
+    {
+        var playlist = _playlist;
+        var result = _playbackControlService.HandleMediaEnded(playlist, RepeatMode);
+        if (result != null)
+        {
+            if (result.UpdatedPlaylist != null)
             {
-                // Track repeat - restart current track
-                sender.Position = TimeSpan.Zero;
+                // Playlist was replaced (neighboring file navigation)
+                LoadFromPlaylist(result.UpdatedPlaylist);
             }
-        });
+
+            PlaySingle(result.NextItem);
+        }
+        else if (RepeatMode == MediaPlaybackAutoRepeatMode.Track && sender != null)
+        {
+            // Track repeat - restart current track
+            sender.Position = TimeSpan.Zero;
+        }
+        else if (stopWhenNoNavigation && sender != null)
+        {
+            sender.Stop();
+        }
     }
 
     private void TransportControlsOnButtonPressed(SystemMediaTransportControls sender, SystemMediaTransportControlsButtonPressedEventArgs args)

@@ -538,6 +538,12 @@ namespace Screenbox.Core.Playback
             VlcPlayer.Dispose();
         }
 
+        public void Stop()
+        {
+            VlcPlayer.Stop();
+            PlaybackState = MediaPlaybackState.None;
+        }
+
         public void Pause()
         {
             if (PlaybackState != MediaPlaybackState.Playing) return;

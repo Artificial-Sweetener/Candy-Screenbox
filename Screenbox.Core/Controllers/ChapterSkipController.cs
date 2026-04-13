@@ -23,6 +23,7 @@ public sealed class ChapterSkipController : ObservableRecipient,
 {
     private static readonly TimeSpan EvaluationDelay = TimeSpan.FromMilliseconds(50);
     private static readonly TimeSpan EndBoundaryTolerance = TimeSpan.FromMilliseconds(250);
+    private static readonly TimeSpan RangeMergeTolerance = TimeSpan.FromMilliseconds(250);
     private static readonly TimeSpan RecentSkipWindow = TimeSpan.FromSeconds(1);
 
     private readonly PlayerContext _playerContext;
@@ -169,14 +170,20 @@ public sealed class ChapterSkipController : ObservableRecipient,
         if (chapters.Count == 0) return;
 
         TimeSpan position = player.Position;
-        foreach (ChapterSkipRange range in _chapterSkipResolver.GetSkipRanges(
-                     currentItem.Location,
-                     chapters,
-                     _chapterSkipStore.Profiles,
-                     player.NaturalDuration))
+        ChapterSkipPlan skipPlan = ChapterSkipPlanner.CreatePlan(
+            position,
+            _chapterSkipResolver.GetSkipRanges(
+                currentItem.Location,
+                chapters,
+                _chapterSkipStore.Profiles,
+                player.NaturalDuration),
+            player.NaturalDuration,
+            EndBoundaryTolerance,
+            RangeMergeTolerance);
+
+        if (skipPlan.Action != ChapterSkipPlanAction.None)
         {
-            if (!ShouldSkip(position, range)) continue;
-            SkipRange(player, currentItem.Location, range, position);
+            ApplySkipPlan(player, currentItem.Location, skipPlan, position);
             return;
         }
 
@@ -184,31 +191,39 @@ public sealed class ChapterSkipController : ObservableRecipient,
             _lastSkip = null;
     }
 
-    private void SkipRange(IMediaPlayer player, string mediaLocation, ChapterSkipRange range, TimeSpan position)
+    private void ApplySkipPlan(IMediaPlayer player, string mediaLocation, ChapterSkipPlan skipPlan, TimeSpan position)
     {
-        if (IsRecentSkip(mediaLocation, range)) return;
+        if (IsRecentSkip(mediaLocation, skipPlan)) return;
 
-        TimeSpan targetPosition = range.EndTime > player.NaturalDuration ? player.NaturalDuration : range.EndTime;
+        TimeSpan targetPosition = skipPlan.EndTime > player.NaturalDuration ? player.NaturalDuration : skipPlan.EndTime;
         if (targetPosition <= position) return;
 
-        _lastSkip = new SkipMarker(mediaLocation, range.ChapterIndex, range.StartTime, range.EndTime, DateTimeOffset.Now);
+        _lastSkip = new SkipMarker(
+            mediaLocation,
+            skipPlan.StartChapterIndex,
+            skipPlan.EndChapterIndex,
+            skipPlan.StartTime,
+            skipPlan.EndTime,
+            DateTimeOffset.Now);
+
+        if (skipPlan.Action == ChapterSkipPlanAction.EndMedia)
+        {
+            Messenger.Send(new PlaybackEndedRequestMessage());
+            return;
+        }
+
         player.Position = targetPosition;
     }
 
-    private bool IsRecentSkip(string mediaLocation, ChapterSkipRange range)
+    private bool IsRecentSkip(string mediaLocation, ChapterSkipPlan skipPlan)
     {
         return _lastSkip is { } lastSkip &&
                lastSkip.MediaLocation.Equals(mediaLocation, StringComparison.OrdinalIgnoreCase) &&
-               lastSkip.ChapterIndex == range.ChapterIndex &&
-               lastSkip.StartTime == range.StartTime &&
-               lastSkip.EndTime == range.EndTime &&
+               lastSkip.StartChapterIndex == skipPlan.StartChapterIndex &&
+               lastSkip.EndChapterIndex == skipPlan.EndChapterIndex &&
+               lastSkip.StartTime == skipPlan.StartTime &&
+               lastSkip.EndTime == skipPlan.EndTime &&
                DateTimeOffset.Now - lastSkip.AppliedAt < RecentSkipWindow;
-    }
-
-    private static bool ShouldSkip(TimeSpan position, ChapterSkipRange range)
-    {
-        return position >= range.StartTime &&
-               position < range.EndTime - EndBoundaryTolerance;
     }
 
     private void ResetSkipState()
@@ -220,7 +235,9 @@ public sealed class ChapterSkipController : ObservableRecipient,
     {
         public string MediaLocation { get; }
 
-        public int ChapterIndex { get; }
+        public int StartChapterIndex { get; }
+
+        public int EndChapterIndex { get; }
 
         public TimeSpan StartTime { get; }
 
@@ -230,13 +247,15 @@ public sealed class ChapterSkipController : ObservableRecipient,
 
         public SkipMarker(
             string mediaLocation,
-            int chapterIndex,
+            int startChapterIndex,
+            int endChapterIndex,
             TimeSpan startTime,
             TimeSpan endTime,
             DateTimeOffset appliedAt)
         {
             MediaLocation = mediaLocation;
-            ChapterIndex = chapterIndex;
+            StartChapterIndex = startChapterIndex;
+            EndChapterIndex = endChapterIndex;
             StartTime = startTime;
             EndTime = endTime;
             AppliedAt = appliedAt;

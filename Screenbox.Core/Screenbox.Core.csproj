@@ -150,6 +150,7 @@
     <Compile Include="Helpers\EnumExtensions.cs" />
     <Compile Include="Helpers\FilesHelpers.cs" />
     <Compile Include="Helpers\LanguageHelper.cs" />
+    <Compile Include="Controllers\ChapterSkipPlanner.cs" />
     <Compile Include="Controllers\ChapterSkipController.cs" />
     <Compile Include="Controllers\LastPositionTracker.cs" />
     <Compile Include="Helpers\ListGrouping.cs" />
@@ -181,6 +182,7 @@
     <Compile Include="Messages\OverrideControlsHideDelayMessage.cs" />
     <Compile Include="Messages\PlayerControlsVisibilityChangedMessage.cs" />
     <Compile Include="Messages\PlayFilesMessage.cs" />
+    <Compile Include="Messages\PlaybackEndedRequestMessage.cs" />
     <Compile Include="Messages\PlaylistCreatedNotificationMessage.cs" />
     <Compile Include="Messages\PlaylistCurrentItemChangedMessage.cs" />
     <Compile Include="Messages\PlaylistDeletedNotificationMessage.cs" />
